@@ -1,0 +1,37 @@
+# 1. 语言标准（保留，没问题）
+-xc
+-std=c11
+
+# 2. 目标架构：GD32F303 是 Cortex-M4 + 单精度 FPU，120MHz
+#    原来只有 --target=arm-none-eabi，clangd 不知道是 M4 还是 M3，float 提示会不准
+#    下面 -mfloat-abi 看 Keil「Target」页：勾了 FPU 用 hard，没勾用 soft
+--target=arm-none-eabi
+-mcpu=cortex-m4
+-mfpu=fpv4-sp-d16
+-mfloat-abi=hard
+
+# 3. 工程/库头文件路径
+#    ★★★ 你原来的 ./CMSIS ./FWLIB/inc 是 STM32 工程的目录名（FWLIB 是 STM32 叫法），
+#    左边目录树里 Template 下根本没有这些文件夹，clangd 会连 gd32f30x.h 都找不到 → 全红。
+#    下面给的是 GD32 官方库 V3.0.3 的典型路径（compile_flags.txt 在 Template 下，故用 ../Firmware）。
+#    最稳的办法：打开 Keil → Options for Target → C/C++ → Include Paths，把里面那几行原样抄过来。
+-I.
+-I./Firmware/CMSIS/GD/GD32F30x/Include
+-I./Firmware/CMSIS
+-I./Firmware/GD32F30x_standard_peripheral/Include
+-I./Utilities
+-I./Template
+-I./Template/Keil5_project/RTE/_GD32F30X_CL
+
+# 4. ARMCLANG 自带标准库（解决 stdio.h；保留）
+#    fpu 子目录：Keil 用硬浮点时保留，软浮点时可删，影响很小
+-ID:/Users/xuan/AppData/Local/Keil_v5/ARM/ARMCLANG/include
+-ID:/Users/xuan/AppData/Local/Keil_v5/ARM/ARMCLANG/include/fpu
+
+# 5. 预编译宏 ★★★ 这是你这次最该改的一块
+#    原 -DSTM32F10X_HD 是 STM32 残留，删掉；GD32 不认它。
+#    原 -DUSE_STDPERIPH_DRIVER 也是 STM32 标准库的开关，GD32 不靠它（留着无害但无用，删掉更干净）。
+#    关键：GD32 的 gd32f30x.h 要求必须定义 GD32F30X_HD / GD32F30X_XD / GD32F30X_CL 之一，
+#    否则直接 #error，clangd 会整片崩红——你原来一个都没定义，这才是病根。
+#    VE(512KB) 一般对应 GD32F30X_HD，但以 Keil 的 Define 栏为准（见下说明）。
+-DGD32F30X_HD
