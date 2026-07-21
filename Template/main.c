@@ -1,28 +1,14 @@
 #include "gd32f30x.h"
-
-/* ===================================================================
- * ST7735S 出图验证 v2：开场填黑(白->黑强对比) + 每秒轮换 R/G/B
- * 接线：SCL=PA5 SDA=PA7 CS=PC0 DC=PC1 RES=PC2  BLK悬空  VCC=3V3
- * 全程阻塞 SPI、裸机、无 DMA/RTOS。SPI 默认慢速(PSC_64)求飞线稳。
- * 旋钮：还白 -> 把 SPI_PSC_64 改 SPI_PSC_256；出图后改 SPI_PSC_8 提速
- * =================================================================== */
-#define LCD_W 128
-#define LCD_H 160
-#define C_RED 0xF800
-#define C_GREEN 0x07E0
-#define C_BLUE 0x001F
-#define C_BLACK 0x0000
-
-#define PIN_CS   GPIO_PIN_2   /* 模块 CS  (第7脚) -> PC2 */
-#define PIN_DC   GPIO_PIN_1   /* 模块 DC  (第6脚) -> PC1 */
-#define PIN_RES  GPIO_PIN_0   /* 模块 RST (第5脚) -> PC0 */
-
-static void delay_ms(uint32_t ms) {
-    volatile uint32_t i, j;
-    for (i = 0; i < ms; i++)
-        for (j = 0; j < 40000; j++)
-            ;
-}
+#include "lcd.h"
+#include "lvgl.h"
+#include "src/core/lv_obj_pos.h"
+#include "src/core/lv_obj_style_gen.h"
+#include "src/font/lv_font.h"
+#include "src/misc/lv_color.h"
+#include "src/misc/lv_timer.h"
+#include "src/widgets/label/lv_label.h"
+#include "stdio.h"
+#include <stdint.h>
 
 /* ---- USART0 解说口 ---- */
 static void usart0_init(void) {
@@ -51,178 +37,105 @@ static void u_puts(const char *s) {
         ;
 }
 
-/* ---- SPI0：模式0 / MSB / 8bit / 软件NSS / 慢速 ---- */
-static void spi_send_byte(uint8_t b) {
-    while (RESET == spi_i2s_flag_get(SPI0, SPI_FLAG_TBE))
-        ;
-    spi_i2s_data_transmit(SPI0, (uint16_t)b);
-    while (SET == spi_i2s_flag_get(SPI0, SPI_FLAG_TRANS))
-        ; /* GD32 真名，非 BSY */
-}
-static void spi0_init(void) {
-    spi_parameter_struct sp;
-    rcu_periph_clock_enable(RCU_GPIOA);
-    rcu_periph_clock_enable(RCU_GPIOC);
-    rcu_periph_clock_enable(RCU_SPI0);
-    gpio_init(GPIOA, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ,
-              GPIO_PIN_5 | GPIO_PIN_7);
-    gpio_init(GPIOA, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
-    gpio_init(GPIOC, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ,
-              PIN_CS | PIN_DC | PIN_RES);
-    gpio_bit_set(GPIOC, PIN_CS);
-    gpio_bit_set(GPIOC, PIN_RES);
+// lvgl显示缓冲区,大小是128*10像素,约2.5kB ram
+#define BUF_LINES 10
+static lv_color_t disp_buf[128 * BUF_LINES];
 
-    spi_struct_para_init(&sp); /* GD32 真名 */
-    sp.trans_mode = SPI_TRANSMODE_FULLDUPLEX;
-    sp.device_mode = SPI_MASTER;
-    sp.frame_size = SPI_FRAMESIZE_8BIT;
-    sp.clock_polarity_phase = SPI_CK_PL_LOW_PH_1EDGE; /* 模式0 */
-    sp.nss = SPI_NSS_SOFT;
-    sp.prescale = SPI_PSC_8; /* 飞线求稳；出图后改 PSC_8 */
-    sp.endian = SPI_ENDIAN_MSB;
-    spi_init(SPI0, &sp); /* 注意：无 spi_deinit */
-    spi_enable(SPI0);
+// lvgl刷新回调,v9版本
+void my_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+    // 1.设置窗口
+    set_window(area->x1, area->y1, area->x2, area->y2);
+
+    // 2.计算像素数量
+    uint32_t len =
+        (uint32_t)(area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
+
+    // 3.批量发送像素数据
+    lcd_send_pixels((uint16_t *)px_map, len);
+
+    // 4.通知lvgl刷新完成
+    lv_display_flush_ready(disp);
 }
 
-/* ---- ST7735S 原语 ---- */
-static void lcd_cmd(uint8_t c) {
-    gpio_bit_reset(GPIOC, PIN_CS);
-    gpio_bit_reset(GPIOC, PIN_DC);
-    spi_send_byte(c);
-    gpio_bit_set(GPIOC, PIN_CS);
+// lvgl显示驱动注册
+void lv_display_init() {
+    // 创建128*160设备
+    lv_display_t *disp = lv_display_create(128, 160);
+
+    // 绑定刷新回调
+    lv_display_set_flush_cb(disp, my_flush_cb);
+
+    // 绑定缓冲区
+    lv_display_set_buffers(disp, disp_buf, NULL, sizeof(disp_buf),
+                           LV_DISPLAY_RENDER_MODE_PARTIAL);
 }
-static void lcd_data1(uint8_t d) {
-    gpio_bit_reset(GPIOC, PIN_CS);
-    gpio_bit_set(GPIOC, PIN_DC);
-    spi_send_byte(d);
-    gpio_bit_set(GPIOC, PIN_CS);
+
+static void delay_ms(uint32_t ms) {
+    volatile uint32_t i, j;
+    for (i = 0; i < ms; i++)
+        for (j = 0; j < 40000; j++)
+            ;
 }
-static void lcd_dataN(const uint8_t *p, uint16_t n) {
-    gpio_bit_reset(GPIOC, PIN_CS);
-    gpio_bit_set(GPIOC, PIN_DC);
-    while (n--)
-        spi_send_byte(*p++);
-    gpio_bit_set(GPIOC, PIN_CS);
-}
-static void lcd_reset(void) {
-    gpio_bit_set(GPIOC, PIN_RES);
-    delay_ms(10);
-    gpio_bit_reset(GPIOC, PIN_RES);
-    delay_ms(20);
-    gpio_bit_set(GPIOC, PIN_RES);
-    delay_ms(120);
-}
-static void lcd_init(void) {
-    uint8_t d[6];
-    lcd_reset();
-    lcd_cmd(0x01);
-    delay_ms(150);
-    lcd_cmd(0x11);
-    delay_ms(500);
-    d[0] = 0x01;
-    d[1] = 0x2C;
-    d[2] = 0x2D;
-    lcd_cmd(0xB1);
-    lcd_dataN(d, 3);
-    d[0] = 0x01;
-    d[1] = 0x2C;
-    d[2] = 0x2D;
-    lcd_cmd(0xB2);
-    lcd_dataN(d, 3);
-    d[0] = 0x01;
-    d[1] = 0x2C;
-    d[2] = 0x2D;
-    d[3] = 0x01;
-    d[4] = 0x2C;
-    d[5] = 0x2D;
-    lcd_cmd(0xB3);
-    lcd_dataN(d, 6);
-    lcd_cmd(0xB4);
-    lcd_data1(0x07);
-    d[0] = 0xA2;
-    d[1] = 0x02;
-    d[2] = 0x84;
-    lcd_cmd(0xC0);
-    lcd_dataN(d, 3);
-    lcd_cmd(0xC1);
-    lcd_data1(0xC5);
-    d[0] = 0x0A;
-    d[1] = 0x00;
-    lcd_cmd(0xC2);
-    lcd_dataN(d, 2);
-    d[0] = 0x8A;
-    d[1] = 0x2A;
-    lcd_cmd(0xC3);
-    lcd_dataN(d, 2);
-    d[0] = 0x8A;
-    d[1] = 0xEE;
-    lcd_cmd(0xC4);
-    lcd_dataN(d, 2);
-    lcd_cmd(0xC5);
-    lcd_data1(0x0E);
-    lcd_cmd(0x20);
-    lcd_cmd(0x3A);
-    lcd_data1(0x05);
-    lcd_cmd(0x36);
-    lcd_data1(0x00);
-    lcd_cmd(0x29);
-    delay_ms(100);
-}
-static void set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
-    uint8_t d[4];
-    lcd_cmd(0x2A);
-    d[0] = x0 >> 8;
-    d[1] = x0 & 0xFF;
-    d[2] = x1 >> 8;
-    d[3] = x1 & 0xFF;
-    lcd_dataN(d, 4);
-    lcd_cmd(0x2B);
-    d[0] = y0 >> 8;
-    d[1] = y0 & 0xFF;
-    d[2] = y1 >> 8;
-    d[3] = y1 & 0xFF;
-    lcd_dataN(d, 4);
-    lcd_cmd(0x2C);
-}
-static void fill_solid(uint32_t count, uint16_t color) {
-    uint8_t hi = color >> 8, lo = color & 0xFF;
-    gpio_bit_reset(GPIOC, PIN_CS);
-    gpio_bit_set(GPIOC, PIN_DC);
-    while (count--) {
-        spi_send_byte(hi);
-        spi_send_byte(lo);
+
+// 全局计数器
+static uint32_t tick_count = 4396;
+
+// 全局变量label指针,方便在定时器里修改它的内容
+static lv_obj_t *time_label;
+
+// 定时器回调函数,每秒执行一次
+static void sec_timer_cb(lv_timer_t *timer) {
+    if (tick_count == 0) {
+        tick_count = 4396;
+    } else {
+        tick_count--;
     }
-    gpio_bit_set(GPIOC, PIN_CS);
-}
-static void fill_screen(uint16_t color) {
-    set_window(0, 0, LCD_W - 1, LCD_H - 1);
-    fill_solid((uint32_t)LCD_W * LCD_H, color);
+
+    // 格式化时间
+    char buf[16];
+    uint8_t h = tick_count / 3600;
+    uint8_t m = (tick_count % 3600) / 60;
+    uint8_t s = tick_count % 60;
+    sprintf(buf, "%02d:%02d:%02d", h, m, s);
+
+    lv_label_set_text(time_label, buf);
 }
 
 int main(void) {
-    usart0_init();
-    u_puts("\r\n>>>>>>>>>> ALIVE: program running, SPI0 init start "
-           "<<<<<<<<<<\r\n");
-    u_puts("if you see this but screen stays white -> waveform not reaching "
-           "panel.\r\n");
-    spi0_init();
-    u_puts("spi0 init done. lcd init...\r\n");
-    lcd_init();
-    u_puts("lcd init done. fill BLACK -> screen MUST turn BLACK (white->black "
-           "proves fill works).\r\n");
-    fill_screen(C_BLACK);
-    delay_ms(1500);
+    // 1.系统时钟与systick配置
+    SystemCoreClockUpdate();
+    SysTick_Config(SystemCoreClock / 1000);
 
-    u_puts("now loop R/G/B ~1s each. watch serial vs screen.\r\n");
+    // 2.硬件初始化
+    usart0_init();
+    u_puts("\r\ngd32启动中...\r\n");
+    lcd_init();
+    u_puts("\r\nlcd初始化完成\r\n");
+
+    // 3.lvgl初始化
+    lv_init();
+    lv_display_init();
+
+    // 4.创建第一个UI,全屏红色背景
+    lv_obj_t *src = lv_screen_active();
+    lv_obj_set_style_bg_color(src, lv_color_black(), 0); // 红色
+    lv_obj_set_style_bg_opa(src, LV_OPA_COVER, 0);
+
+    // 5.设置文本和样式
+    time_label = lv_label_create(src);
+    lv_label_set_text(time_label, "00:00:00");
+    lv_obj_set_style_text_color(time_label, lv_color_white(), 0); // 白色文字
+    lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
+
+    // 6.设置居中
+    lv_obj_center(time_label);
+
+    // 7.创建定时器,1000ms调用一次
+    lv_timer_create(sec_timer_cb, 1000, NULL);
+
+    // 5.主循环
     while (1) {
-        fill_screen(C_RED);
-        u_puts("RED\r\n");
-        delay_ms(1000);
-        fill_screen(C_GREEN);
-        u_puts("GREEN\r\n");
-        delay_ms(1000);
-        fill_screen(C_BLUE);
-        u_puts("BLUE\r\n");
-        delay_ms(1000);
+        lv_timer_handler();
+        delay_ms(5);
     }
 }

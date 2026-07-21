@@ -29,4 +29,7 @@
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_misc.h \
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_enet.h \
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_exmc.h \
-  ..\main.h ..\systick.h
+  ..\main.h ..\..\Utilities\Third_Party\lvgl-9.1.0\src\tick\lv_tick.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\tick\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\tick\..\lv_conf_kconfig.h \
+  ..\..\Utilities\Third_Party\lv_conf.h ..\systick.h

@@ -34,6 +34,7 @@ OF SUCH DAMAGE.
 
 #include "gd32f30x_it.h"
 #include "main.h"
+#include "src/tick/lv_tick.h"
 #include "systick.h"
 
 /*!
@@ -137,4 +138,5 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
     delay_decrement();
+    lv_tick_inc(1);
 }

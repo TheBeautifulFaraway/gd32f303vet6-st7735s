@@ -1,0 +1,32 @@
+./output/lv_utils.o: \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\lv_utils.c \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\lv_utils.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\lv_conf_kconfig.h \
+  ..\..\Utilities\Third_Party\lv_conf.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\lv_draw_buf.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_area.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_color.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_assert.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_log.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\..\stdlib\lv_mem.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\..\stdlib\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\..\stdlib\..\misc\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_math.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_palette.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\misc\lv_color_op.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\stdlib\lv_string.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\stdlib\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\lv_image_dsc.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\..\draw\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\lv_fs.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_image_cache.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_cache_private.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\lv_os.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\..\misc\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\lv_os_none.h

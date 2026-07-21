@@ -1,0 +1,23 @@
+./output/lv_cache_entry.o: \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_cache_entry.c \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_cache_entry.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\lv_os.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\..\lv_conf_kconfig.h \
+  ..\..\Utilities\Third_Party\lv_conf.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\..\misc\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\..\misc\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\osal\lv_os_none.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_cache_private.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\stdlib\lv_sprintf.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\lv_assert.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\lv_log.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\stdlib\lv_mem.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\stdlib\..\lv_conf_internal.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\..\..\stdlib\..\misc\lv_types.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_cache.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\_lv_cache_lru_rb.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_image_cache.h \
+  ..\..\Utilities\Third_Party\lvgl-9.1.0\src\misc\cache\lv_cache_entry_private.h
