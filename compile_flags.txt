@@ -24,6 +24,7 @@
 -I./Template/Keil5_project/RTE/_GD32F30X_CL
 -I./Utilities/Third_Party/lvgl-9.1.0
 -I./Utilities/Third_Party
+-I./Utilities/Third_Party/numbers
 
 # 4. ARMCLANG 自带标准库（解决 stdio.h；保留）
 #    fpu 子目录：Keil 用硬浮点时保留，软浮点时可删，影响很小
